@@ -34,7 +34,7 @@ CREATE TABLE `admin` (
   `nama_lengkap` varchar(100) NOT NULL,
   `nama_sekolah` varchar(100) DEFAULT NULL,
   `logo_sekolah` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `admin`
@@ -54,7 +54,7 @@ CREATE TABLE `aturan` (
   `id_masalah` int NOT NULL,
   `id_gejala` int NOT NULL,
   `nilai_belief` float NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `aturan`
@@ -81,7 +81,7 @@ CREATE TABLE `detail_konsultasi` (
   `id_detail` int NOT NULL,
   `id_konsultasi` int NOT NULL,
   `id_gejala` int NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `detail_konsultasi`
@@ -107,7 +107,7 @@ CREATE TABLE `gejala` (
   `id_gejala` int NOT NULL,
   `kode_gejala` varchar(10) NOT NULL,
   `nama_gejala` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `gejala`
@@ -132,7 +132,7 @@ CREATE TABLE `hasil_konsultasi` (
   `id_masalah` int NOT NULL,
   `nilai_persentase` float NOT NULL,
   `log_proses` text
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `hasil_konsultasi`
@@ -154,7 +154,7 @@ CREATE TABLE `masalah` (
   `kode_masalah` varchar(10) NOT NULL,
   `nama_masalah` varchar(100) NOT NULL,
   `solusi` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `masalah`
@@ -175,7 +175,7 @@ CREATE TABLE `riwayat_konsultasi` (
   `id_konsultasi` int NOT NULL,
   `id_siswa` int NOT NULL,
   `tanggal` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `riwayat_konsultasi`
@@ -198,7 +198,7 @@ CREATE TABLE `siswa` (
   `nama_siswa` varchar(100) NOT NULL,
   `kelas` varchar(20) NOT NULL,
   `jenis_kelamin` enum('L','P') NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `siswa`
