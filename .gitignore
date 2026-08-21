@@ -1,0 +1,26 @@
+# Dependency Composer — di-generate ulang dengan `composer install`
+/vendor/
+
+# Upload runtime (logo sekolah, dsb)
+/uploads/
+
+# Konfigurasi lokal berisi kredensial database
+config/local.php
+.env
+
+# Naskah, data mentah, dan dokumen pendukung
+# JANGAN commit data siswa — berisi NISN, tanggal lahir, dan alamat rumah anak di bawah umur
+*.docx
+*.xlsx
+/data_and_screenshots/
+/screenshots/
+
+# Berkas sampah
+*.stackdump
+output.html
+Thumbs.db
+.DS_Store
+
+# Editor
+/.vscode/
+/.idea/
