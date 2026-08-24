@@ -1,5 +1,5 @@
 <?php
-// Autoload sederhana untuk me-load class
+// Autoload sederhana untuk memuat kelas dari folder models/
 spl_autoload_register(function ($class_name) {
     $file = __DIR__ . '/../models/' . $class_name . '.php';
     if (file_exists($file)) {
@@ -7,7 +7,9 @@ spl_autoload_register(function ($class_name) {
     }
 });
 
+// Helper keamanan (token CSRF)
+require_once __DIR__ . '/keamanan.php';
+
 // Inisialisasi Database
 $database = new Database();
-$db = $database->getConnection();
-$conn = $db; // For backward compatibility with legacy scripts if any
+$db       = $database->getConnection();
