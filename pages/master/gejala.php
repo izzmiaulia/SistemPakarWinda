@@ -1,4 +1,6 @@
 <?php
+csrf_wajib();
+
 $gejalaModel = new Gejala($db); // $db comes from index.php
 
 // Inisialisasi Flash Message helper
@@ -28,8 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         header("Location: index.php?page=gejala"); exit;
     }
 }
-if (isset($_GET['hapus'])) {
-    $gejalaModel->hapusGejala($_GET['hapus']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
+    $gejalaModel->hapusGejala($_POST['hapus']);
     setFlash('success', 'Data gejala berhasil dihapus.');
     header("Location: index.php?page=gejala"); exit;
 }
@@ -49,7 +51,7 @@ $dataGejala = $gejalaModel->getGejalaPaginated($keyword, $limit, $offset);
 <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
     <div>
         <h2 class="text-2xl font-bold text-slate-800">Data Gejala</h2>
-        <p class="text-slate-500 mt-1 text-sm">Kelola daftar indikasi atau gejala dari masalah perilaku psikologis.</p>
+        <p class="text-slate-500 mt-1 text-sm">Kelola daftar pernyataan indikator yang dijawab siswa saat konsultasi.</p>
     </div>
     <div class="flex">
         <button onclick="document.getElementById('modalTambah').classList.remove('hidden')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl font-medium flex items-center transition-colors shadow-sm">
@@ -168,6 +170,7 @@ $dataGejala = $gejalaModel->getGejalaPaginated($keyword, $limit, $offset);
             <button type="button" onclick="document.getElementById('modalTambah').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <form method="POST">
+            <?= csrf_field() ?>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Kode Gejala (Otomatis)</label>
@@ -194,6 +197,7 @@ $dataGejala = $gejalaModel->getGejalaPaginated($keyword, $limit, $offset);
             <button type="button" onclick="document.getElementById('modalEdit').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <form method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="id_gejala" id="edit_id">
             <div class="space-y-4">
                 <div>
@@ -212,6 +216,12 @@ $dataGejala = $gejalaModel->getGejalaPaginated($keyword, $limit, $offset);
         </form>
     </div>
 </div>
+
+<!-- Form penghapusan (POST + token) -->
+<form id="formHapus" method="POST" action="index.php?page=gejala" class="hidden">
+    <?= csrf_field() ?>
+    <input type="hidden" name="hapus" id="idHapus">
+</form>
 
 <script>
     document.getElementById('page-title').innerText = 'Data Gejala';
@@ -235,7 +245,8 @@ $dataGejala = $gejalaModel->getGejalaPaginated($keyword, $limit, $offset);
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = 'index.php?page=gejala&hapus=' + id;
+                document.getElementById('idHapus').value = id;
+                document.getElementById('formHapus').submit();
             }
         });
     }

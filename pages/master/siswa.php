@@ -1,4 +1,6 @@
 <?php
+csrf_wajib();
+
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -138,8 +140,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         header("Location: index.php?page=siswa"); exit;
     }
 }
-if (isset($_GET['hapus'])) {
-    $siswaModel->hapusSiswa($_GET['hapus']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['hapus'])) {
+    $siswaModel->hapusSiswa($_POST['hapus']);
     setFlash('success', 'Data siswa berhasil dihapus.');
     header("Location: index.php?page=siswa"); exit;
 }
@@ -305,6 +307,7 @@ $daftarKelas = $siswaModel->getDaftarKelas();
             <button type="button" onclick="document.getElementById('modalTambah').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <form method="POST">
+            <?= csrf_field() ?>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">NIS</label>
@@ -345,6 +348,7 @@ $daftarKelas = $siswaModel->getDaftarKelas();
             <button type="button" onclick="document.getElementById('modalEdit').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <form method="POST">
+            <?= csrf_field() ?>
             <input type="hidden" name="id_siswa" id="edit_id">
             <div class="space-y-4">
                 <div>
@@ -386,6 +390,7 @@ $daftarKelas = $siswaModel->getDaftarKelas();
             <button type="button" onclick="document.getElementById('modalImport').classList.add('hidden')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
         <form method="POST" enctype="multipart/form-data">
+            <?= csrf_field() ?>
             <div class="space-y-4">
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-600 mb-2">
                     <p class="font-semibold text-slate-800 mb-2">Instruksi Import:</p>
@@ -415,6 +420,12 @@ $daftarKelas = $siswaModel->getDaftarKelas();
     </div>
 </div>
 
+<!-- Form penghapusan (POST + token) -->
+<form id="formHapus" method="POST" action="index.php?page=siswa" class="hidden">
+    <?= csrf_field() ?>
+    <input type="hidden" name="hapus" id="idHapus">
+</form>
+
 <script>
     document.getElementById('page-title').innerText = 'Data Siswa';
     
@@ -439,7 +450,8 @@ $daftarKelas = $siswaModel->getDaftarKelas();
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = 'index.php?page=siswa&hapus=' + id;
+                document.getElementById('idHapus').value = id;
+                document.getElementById('formHapus').submit();
             }
         });
     }

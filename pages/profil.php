@@ -1,4 +1,6 @@
 <?php
+csrf_wajib();
+
 // Handle form submission
 $success = '';
 $error = '';
@@ -129,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <form method="POST" action="index.php?page=profil" enctype="multipart/form-data" class="p-6 space-y-5">
+            <?= csrf_field() ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
