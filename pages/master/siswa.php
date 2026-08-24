@@ -97,33 +97,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($siswaModel->cekNisAda($_POST['nis'], $_POST['id_siswa'])) {
             setFlash('error', 'Gagal: NIS sudah terdaftar untuk siswa lain.');
         } else {
-            $siswaModel->ubahSiswa($_POST['id_siswa'], $_POST['nis'], $_POST['nama'], $_POST['kelas'], $_POST['jk']);
+            $siswaModel->ubahSiswa($_POST['id_siswa'], $_POST['nis'], $_POST['nama'], $_POST['kelas'], $_POST['jk'], $_SESSION['id_admin'] ?? null);
             setFlash('success', 'Data siswa berhasil diubah.');
         }
         header("Location: index.php?page=siswa"); exit;
     } elseif (isset($_POST['import'])) {
-        if (isset($_FILES['excel_file']) && $_FILES['excel_file']['error'] == 0) {
+        if (isset($_FILES['excel_file'])) {
+            $hasilValidasi = berkas_valid_xlsx($_FILES['excel_file']);
+            if (!$hasilValidasi['ok']) {
+                setFlash('error', $hasilValidasi['error']);
+                header("Location: index.php?page=siswa"); exit;
+            }
+
             try {
                 $file = $_FILES['excel_file']['tmp_name'];
                 $spreadsheet = IOFactory::load($file);
                 $sheetData = $spreadsheet->getActiveSheet()->toArray(null, true, true, true);
-                
+
                 $sukses = 0;
                 $gagal = 0;
-                
+
                 $first = true;
                 foreach ($sheetData as $row) {
-                    if ($first) { $first = false; continue; } 
-                    
+                    if ($first) { $first = false; continue; }
+
                     // Format: A = NIS, B = Nama, C = Kelas, D = JK
                     $nis = trim((string)$row['A']);
                     $nama = trim((string)$row['B']);
                     $kelas = trim((string)$row['C']);
                     $jk = strtoupper(trim((string)$row['D'])) == 'P' ? 'P' : 'L';
-                    
+
                     if (!empty($nis) && !empty($nama)) {
                         if (!$siswaModel->cekNisAda($nis)) {
-                            $siswaModel->tambahSiswa($nis, $nama, $kelas, $jk);
+                            $siswaModel->tambahSiswa($nis, $nama, $kelas, $jk, $_SESSION['id_admin'] ?? null);
                             $sukses++;
                         } else {
                             $gagal++;
