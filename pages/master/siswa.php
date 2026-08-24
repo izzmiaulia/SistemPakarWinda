@@ -12,7 +12,7 @@ function setFlash($type, $msg) {
 
 // 1. Export Excel
 if (isset($_GET['export']) && $_GET['export'] == 'excel') {
-    $allSiswa = $siswaModel->getSiswaPaginated('', '', 999999, 0); // ambil semua
+    $allSiswa = $siswaModel->getAllSiswa(); // seluruh data, tanpa batas semu
     
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
