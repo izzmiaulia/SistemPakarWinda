@@ -105,14 +105,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php if (!empty($success)): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({ icon: 'success', title: 'Berhasil!', text: '<?= addslashes($success) ?>', confirmButtonColor: '#16a34a' });
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: <?= json_encode($success) ?>, confirmButtonColor: '#16a34a' });
         });
     </script>
 <?php endif; ?>
 <?php if (!empty($error)): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({ icon: 'error', title: 'Gagal!', text: '<?= addslashes($error) ?>', confirmButtonColor: '#dc2626' });
+            Swal.fire({ icon: 'error', title: 'Gagal!', text: <?= json_encode($error) ?>, confirmButtonColor: '#dc2626' });
         });
     </script>
 <?php endif; ?>

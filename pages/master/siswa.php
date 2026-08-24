@@ -189,7 +189,7 @@ $daftarKelas = $siswaModel->getDaftarKelas();
             Swal.fire({
                 icon: '<?= $icon ?>',
                 title: '<?= $title ?>',
-                text: '<?= addslashes($flash['message']) ?>',
+                text: <?= json_encode($flash['message']) ?>,
                 confirmButtonColor: '#16a34a'
             });
         });
