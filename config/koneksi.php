@@ -7,8 +7,10 @@ spl_autoload_register(function ($class_name) {
     }
 });
 
-// Helper keamanan (token CSRF)
+// Helper keamanan (token CSRF, gerbang peran)
 require_once __DIR__ . '/keamanan.php';
+// Helper validasi berkas unggahan
+require_once __DIR__ . '/unggah.php';
 
 // Inisialisasi Database
 $database = new Database();
