@@ -1,4 +1,5 @@
 <?php
+role_wajib('pakar');
 csrf_wajib();
 
 $kepribadianModel = new Kepribadian($db);

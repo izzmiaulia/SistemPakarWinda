@@ -35,9 +35,11 @@ if (!$terkunci && $_SERVER['REQUEST_METHOD'] === 'POST') {
         // Cegah session fixation: ganti id sesi setelah autentikasi berhasil
         session_regenerate_id(true);
 
-        $_SESSION['login']       = true;
-        $_SESSION['id_admin']    = $admin['id_admin'];
-        $_SESSION['gagal_login'] = ['jumlah' => 0, 'sampai' => 0];
+        $_SESSION['login']               = true;
+        $_SESSION['id_admin']            = $admin['id_admin'];
+        $_SESSION['role']                = $admin['role'];
+        $_SESSION['harus_ganti_password'] = (bool) $admin['harus_ganti_password'];
+        $_SESSION['gagal_login']         = ['jumlah' => 0, 'sampai' => 0];
 
         header('Location: index.php?page=dashboard');
         exit;

@@ -47,6 +47,7 @@
                 <i data-lucide="users" class="<?= getIconClass($page, 'siswa') ?>"></i>
                 <span class="menu-text whitespace-nowrap">Data Siswa</span>
             </a>
+            <?php if (($_SESSION['role'] ?? null) === 'pakar'): ?>
             <a href="index.php?page=kepribadian" class="<?= getMenuClass($page, 'kepribadian') ?>" title="Tipe Kepribadian">
                 <i data-lucide="user-square" class="<?= getIconClass($page, 'kepribadian') ?>"></i>
                 <span class="menu-text whitespace-nowrap">Tipe Kepribadian</span>
@@ -59,6 +60,7 @@
                 <i data-lucide="git-merge" class="<?= getIconClass($page, 'aturan') ?>"></i>
                 <span class="menu-text whitespace-nowrap">Aturan Pakar</span>
             </a>
+            <?php endif; ?>
 
             <div class="pt-4 pb-2 px-3 menu-text">
                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Sistem Pakar</p>

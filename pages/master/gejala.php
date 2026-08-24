@@ -1,4 +1,5 @@
 <?php
+role_wajib('pakar');
 csrf_wajib();
 
 $gejalaModel = new Gejala($db); // $db comes from index.php

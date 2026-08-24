@@ -49,3 +49,18 @@ if (!function_exists('csrf_wajib')) {
         }
     }
 }
+
+if (!function_exists('role_wajib')) {
+    /**
+     * Batasi halaman hanya untuk peran tertentu (mis. 'pakar').
+     * Dipanggil di awal halaman master data yang khusus Pakar BK/Admin,
+     * sebelum csrf_wajib() karena otorisasi berlaku untuk GET juga, bukan hanya POST.
+     */
+    function role_wajib(string $peranDiizinkan): void
+    {
+        if (($_SESSION['role'] ?? null) !== $peranDiizinkan) {
+            http_response_code(403);
+            exit('Akses ditolak. Halaman ini khusus untuk Pakar BK/Admin.');
+        }
+    }
+}

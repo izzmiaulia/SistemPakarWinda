@@ -13,9 +13,11 @@ require 'config/koneksi.php';
 // 2. Profil admin/sekolah yang dipakai di seluruh halaman
 $stmtCheck = $db->query("SELECT COUNT(*) FROM admin");
 if ($stmtCheck->fetchColumn() == 0) {
-    $defHash = password_hash('gurubk123', PASSWORD_BCRYPT);
-    $db->prepare("INSERT INTO admin (username, password, nama_lengkap, nama_sekolah, logo_sekolah) VALUES (?, ?, ?, ?, ?)")
-       ->execute(['gurubk', $defHash, 'Guru BK', 'MTs Swasta TPI Gunung Pamela', null]);
+    $konfigLokal    = file_exists(__DIR__ . '/config/local.php') ? require __DIR__ . '/config/local.php' : [];
+    $passwordAwal   = $konfigLokal['default_admin_password'] ?? 'GantiSegera#2026';
+    $defHash        = password_hash($passwordAwal, PASSWORD_BCRYPT);
+    $db->prepare("INSERT INTO admin (username, password, nama_lengkap, nama_sekolah, logo_sekolah, role, harus_ganti_password) VALUES (?, ?, ?, ?, ?, ?, ?)")
+       ->execute(['gurubk', $defHash, 'Guru BK', 'MTs Swasta TPI Gunung Pamela', null, 'pakar', 1]);
 }
 
 $admin_profile = $db->query("SELECT * FROM admin ORDER BY id_admin ASC LIMIT 1")->fetch();
@@ -42,6 +44,12 @@ $routes = [
 // 5. Cek autentikasi (kecuali untuk halaman login)
 if ($page !== 'login' && !isset($_SESSION['login'])) {
     header('Location: index.php?page=login');
+    exit;
+}
+
+// 5b. Paksa ganti password sebelum mengakses halaman lain, kecuali profil sendiri
+if (!empty($_SESSION['harus_ganti_password']) && !in_array($page, ['login', 'logout', 'profil'], true)) {
+    header('Location: index.php?page=profil');
     exit;
 }
 
