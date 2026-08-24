@@ -234,5 +234,5 @@ if ($gagal > 0) {
     exit(1);
 }
 
-printf("\nSeluruh uji lulus - keluaran mesin cocok dengan Bab IV naskah.\n");
+printf("\nSeluruh uji lulus\n");
 exit(0);
