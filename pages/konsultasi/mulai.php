@@ -80,7 +80,7 @@ $warnaTipe = [
                             <option value="<?= $s['id_siswa'] ?>"><?= htmlspecialchars($s['nis']) ?> - <?= htmlspecialchars($s['nama_siswa']) ?> (<?= htmlspecialchars($s['kelas']) ?>)</option>
                         <?php endforeach; ?>
                     </select>
-                    <p class="text-[11px] text-slate-400 mt-1.5">Jawaban diisi oleh siswa yang bersangkutan, didampingi guru BK.</p>
+                    <p class="text-[11px] text-slate-400 mt-1.5">Jawaban diisi oleh Guru BK berdasarkan hasil observasi/wawancara dengan siswa.</p>
                 </div>
 
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
