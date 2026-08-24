@@ -1,21 +1,58 @@
 <?php
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+csrf_wajib();
 
-    // Cari admin di database
+/**
+ * Pembatasan percobaan masuk.
+ * Setelah beberapa kali gagal berturut-turut, formulir dikunci sementara
+ * agar tidak dapat dicoba terus-menerus.
+ */
+const MAKS_PERCOBAAN = 5;
+const LAMA_KUNCI     = 300; // detik
+
+$error   = '';
+$terkunci = false;
+$sisaKunci = 0;
+
+if (!isset($_SESSION['gagal_login'])) {
+    $_SESSION['gagal_login'] = ['jumlah' => 0, 'sampai' => 0];
+}
+
+if ($_SESSION['gagal_login']['sampai'] > time()) {
+    $terkunci  = true;
+    $sisaKunci = $_SESSION['gagal_login']['sampai'] - time();
+    $error     = 'Terlalu banyak percobaan gagal. Coba lagi dalam ' . ceil($sisaKunci / 60) . ' menit.';
+}
+
+if (!$terkunci && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
     $stmt = $db->prepare("SELECT * FROM admin WHERE username = :user LIMIT 1");
     $stmt->execute([':user' => $username]);
     $admin = $stmt->fetch();
 
     if ($admin && password_verify($password, $admin['password'])) {
-        $_SESSION['login'] = true;
-        $_SESSION['id_admin'] = $admin['id_admin'];
+        // Cegah session fixation: ganti id sesi setelah autentikasi berhasil
+        session_regenerate_id(true);
+
+        $_SESSION['login']       = true;
+        $_SESSION['id_admin']    = $admin['id_admin'];
+        $_SESSION['gagal_login'] = ['jumlah' => 0, 'sampai' => 0];
+
         header('Location: index.php?page=dashboard');
         exit;
+    }
+
+    $_SESSION['gagal_login']['jumlah']++;
+
+    if ($_SESSION['gagal_login']['jumlah'] >= MAKS_PERCOBAAN) {
+        $_SESSION['gagal_login']['sampai'] = time() + LAMA_KUNCI;
+        $_SESSION['gagal_login']['jumlah'] = 0;
+        $error = 'Terlalu banyak percobaan gagal. Coba lagi dalam ' . (LAMA_KUNCI / 60) . ' menit.';
+        $terkunci = true;
     } else {
-        $error = 'Username atau Password salah!';
+        $sisa  = MAKS_PERCOBAAN - $_SESSION['gagal_login']['jumlah'];
+        $error = 'Username atau kata sandi salah. Sisa percobaan: ' . $sisa . '.';
     }
 }
 ?>
@@ -38,9 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
         
         <form class="space-y-6" method="POST" action="index.php?page=login">
+            <?= csrf_field() ?>
             <?php if ($error): ?>
                 <div class="bg-red-50 text-red-700 p-4 rounded-xl text-sm font-semibold flex items-center border border-red-100">
-                    <i data-lucide="alert-circle" class="w-5 h-5 mr-2 shrink-0"></i> <?= $error ?>
+                    <i data-lucide="alert-circle" class="w-5 h-5 mr-2 shrink-0"></i> <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
             
@@ -66,8 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
 
             <div>
-                <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors shadow-md shadow-brand-500/20">
-                    Masuk ke Sistem
+                <button type="submit" <?= $terkunci ? 'disabled' : '' ?> class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white <?= $terkunci ? 'bg-slate-300 cursor-not-allowed' : 'bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-500/20' ?> focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors">
+                    <?= $terkunci ? 'Sementara Terkunci' : 'Masuk ke Sistem' ?>
                     <i data-lucide="arrow-right" class="w-5 h-5 ml-2 absolute right-4 group-hover:translate-x-1 transition-transform"></i>
                 </button>
             </div>
