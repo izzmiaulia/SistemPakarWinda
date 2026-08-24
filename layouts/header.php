@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Pakar BK - Guru BK</title>
     <!-- Tailwind CSS -->
-    <script>
-        // Trik untuk menyembunyikan peringatan bawaan Tailwind CDN di console
-        const originalWarn = console.warn;
-        console.warn = function() {
-            if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].includes('cdn.tailwindcss.com should not be used in production')) return;
-            originalWarn.apply(console, arguments);
-        };
-    </script>
+    <!-- Dipasang lewat CDN, belum migrasi ke build lokal (lihat Pemecahan Masalah
+         di README). Peringatan bawaan CDN di console SENGAJA dibiarkan tampil,
+         bukan dibungkam, supaya siapa pun yang membuka console tahu keterbatasan
+         ini apa adanya. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
