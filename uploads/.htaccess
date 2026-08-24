@@ -1,0 +1,7 @@
+# Folder ini menyimpan berkas unggahan pengguna (logo sekolah). Isinya divalidasi
+# berdasarkan MIME/magic byte sebelum disimpan (lihat config/unggah.php), tapi
+# baris di bawah ini adalah lapis pertahanan kedua: pastikan berkas apa pun di
+# sini TIDAK PERNAH dieksekusi sebagai PHP oleh Apache.
+<FilesMatch "\.(php|phtml|php[3-8]?|phar|pht)$">
+    Require all denied
+</FilesMatch>

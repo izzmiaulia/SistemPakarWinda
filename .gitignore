@@ -1,8 +1,9 @@
 # Dependency Composer — di-generate ulang dengan `composer install`
 /vendor/
 
-# Upload runtime (logo sekolah, dsb)
-/uploads/
+# Upload runtime (logo sekolah, dsb) -- kecuali .htaccess yang mengunci folder ini
+/uploads/*
+!/uploads/.htaccess
 
 # Konfigurasi lokal berisi kredensial database
 config/local.php
