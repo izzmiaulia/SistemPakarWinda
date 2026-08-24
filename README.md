@@ -15,7 +15,9 @@ Dibangun dengan **PHP native + MySQL/MariaDB**, tanpa framework.
 
 ## Fitur
 
-- **Autentikasi** — login/logout dengan password ter-hash (bcrypt)
+- **Autentikasi & Peran** — login/logout dengan password ter-hash (bcrypt), dua peran akun
+  (**Pakar BK/Admin**: akses penuh termasuk master data; **Guru BK**: konsultasi & data
+  siswa saja), wajib ganti password pada login pertama
 - **Manajemen Siswa** — CRUD, pencarian, filter kelas, paginasi, **impor & ekspor Excel**
 - **Tipe Kepribadian** — empat hipotesis DISC beserta deskripsi dan rekomendasi layanan BK
 - **Indikator** — 16 pernyataan swalapor yang menjadi dasar penilaian
@@ -97,19 +99,27 @@ Impor skema beserta data contohnya:
 mysql -u root db_pakar_bk < db_pakar_bk.sql
 ```
 
-### 5. Sesuaikan koneksi database
+### 5. Sesuaikan koneksi database (opsional)
 
-Kredensial diatur di [`models/Database.php`](models/Database.php). Nilai bawaannya
-mengikuti pengaturan standar XAMPP:
+Kredensial database dan password admin bawaan diatur lewat `config/local.php`
+(gitignored, tidak ikut ter-commit). Kalau tidak dibuat, aplikasi memakai nilai
+bawaan XAMPP (`root`, tanpa password) dan otomatis tetap bisa jalan.
 
-```php
-private $host   = "localhost";
-private $user   = "root";
-private $pass   = "";
-private $dbname = "db_pakar_bk";
+Untuk mengubahnya, salin templatenya lalu sesuaikan:
+
+```bash
+cp config/local.example.php config/local.php
 ```
 
-Ubah bila konfigurasi server Anda berbeda.
+```php
+return [
+    'db_host' => 'localhost',
+    'db_user' => 'root',
+    'db_pass' => '',
+    'db_name' => 'db_pakar_bk',
+    'default_admin_password' => 'GantiSegera#2026',
+];
+```
 
 ---
 
@@ -134,15 +144,20 @@ Letakkan folder proyek di dalam `htdocs`, lalu akses
 
 ```
 Username : gurubk
-Password : gurubk123
 ```
 
-> 🔐 **Segera ganti setelah login pertama** melalui menu **Pengaturan → Profil Sekolah**.
-> Kredensial ini tercantum di berkas `db_pakar_bk.sql` yang ada di repository publik,
-> sehingga **tidak boleh dipakai** pada pemasangan yang dapat diakses dari luar.
+Password bawaan **tidak** dicantumkan di sini maupun di berkas mana pun yang ter-commit.
+Ia ditentukan oleh `default_admin_password` di `config/local.php` (salin dari
+[`config/local.example.php`](config/local.example.php) — berkas ini sudah
+di-`.gitignore`). Kalau `config/local.php` tidak dibuat, aplikasi memakai nilai
+bawaan yang tertulis di `config/local.example.php`.
+
+Akun ini **wajib mengganti password pada login pertama** — sistem otomatis
+mengarahkan ke halaman Profil sampai penggantian selesai, tidak bisa dilewati.
 
 Bila tabel `admin` kosong, aplikasi akan membuat akun bawaan ini secara otomatis
-saat pertama kali dijalankan (lihat [`index.php`](index.php)).
+saat pertama kali dijalankan (lihat [`index.php`](index.php)), dengan peran
+`pakar` (akses penuh).
 
 ---
 
@@ -152,15 +167,18 @@ saat pertama kali dijalankan (lihat [`index.php`](index.php)).
 SistemPakarWinda/
 ├── index.php               Front controller — sesi, autoload, routing, render layout
 ├── download_perhitungan.php  Ekspor rincian perhitungan ke .xlsx
-├── db_pakar_bk.sql         Skema database + basis pengetahuan
+├── db_pakar_bk.sql         Skema database + basis pengetahuan (pemasangan baru)
+├── migration_role_password_akun.sql  ALTER inkremental untuk DB yang sudah ada
 ├── composer.json
 │
 ├── config/
 │   ├── koneksi.php         Autoloader sederhana + inisialisasi koneksi
-│   └── keamanan.php        Helper token CSRF
+│   ├── keamanan.php        Helper token CSRF + gerbang peran (role_wajib)
+│   ├── unggah.php          Validasi berkas unggahan (MIME/magic byte)
+│   └── local.example.php   Template config/local.php (kredensial DB, password bawaan)
 │
 ├── models/                 Lapisan akses data (repository)
-│   ├── Database.php        Koneksi PDO
+│   ├── Database.php        Koneksi PDO, baca config/local.php bila ada
 │   ├── Siswa.php
 │   ├── Kepribadian.php     Hipotesis H01–H04 beserta rule R01–R04
 │   ├── Gejala.php          Indikator G01–G16
@@ -192,13 +210,14 @@ memerlukan sesi yang aktif.
 ## Skema Database
 
 ```
-admin                 Akun pengguna + identitas sekolah
-siswa                 Data peserta didik
+admin                 Akun pengguna + identitas sekolah + peran (guru_bk/pakar)
+siswa                 Data peserta didik + id_admin/created_at/updated_at
 
 kepribadian           Hipotesis H01–H04 (tipe D/I/S/C) + rule R01–R04,
-                      deskripsi, dan rekomendasi layanan BK
-gejala                16 indikator pernyataan (G01–G16)
-aturan                Relasi kepribadian ↔ gejala + nilai CF pakar (0–1)
+                      deskripsi, rekomendasi layanan BK, + id_admin/created_at/updated_at
+gejala                16 indikator pernyataan (G01–G16) + id_admin/created_at/updated_at
+aturan                Relasi kepribadian ↔ gejala + nilai CF pakar (0–1),
+                      + id_admin/created_at/updated_at
 
 riwayat_konsultasi    Sesi konsultasi per siswa
 ├── detail_konsultasi Jawaban atas SETIAP indikator + bobot pakar saat itu
@@ -206,8 +225,11 @@ riwayat_konsultasi    Sesi konsultasi per siswa
 └── hasil_detail      Skor keempat tipe beserta peringkatnya
 ```
 
-Seluruh tabel memakai InnoDB dengan *foreign key* `ON DELETE CASCADE`, sehingga
-menghapus satu siswa akan ikut membersihkan seluruh riwayat konsultasinya.
+Seluruh tabel memakai InnoDB. *Foreign key* ke `siswa`/`kepribadian`/`gejala` memakai
+`ON DELETE CASCADE` (menghapus satu siswa ikut membersihkan riwayat konsultasinya).
+*Foreign key* `id_admin` (kolom audit ringan: siapa & kapan) sengaja memakai
+`ON DELETE SET NULL` — menghapus akun admin tidak boleh ikut menghapus data siswa
+atau basis pengetahuan.
 
 Collation yang dipakai adalah `utf8mb4_general_ci` agar dapat dipasang baik pada
 MariaDB maupun MySQL 8.
@@ -303,7 +325,9 @@ Ekstensi `zip` (dan `gd`) belum aktif. Ikuti kembali **Instalasi langkah 2**.
 <summary><b>Koneksi Database OOP Gagal</b></summary>
 
 Pastikan layanan MySQL/MariaDB sudah berjalan, database `db_pakar_bk` sudah dibuat,
-dan kredensial di `models/Database.php` sesuai dengan konfigurasi server Anda.
+dan kredensial di `config/local.php` (lihat `config/local.example.php`) sesuai
+dengan konfigurasi server Anda. Kalau `config/local.php` belum dibuat, aplikasi
+memakai nilai bawaan XAMPP (`root`, tanpa password).
 
 </details>
 
