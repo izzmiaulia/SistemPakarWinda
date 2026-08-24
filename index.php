@@ -37,18 +37,18 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'dashboard';
 
 // 3. Mapping rute ke file fisik di folder pages/
 $routes = [
-    'dashboard' => 'pages/dashboard.php',
-    'siswa'     => 'pages/master/siswa.php',
-    'masalah'   => 'pages/master/masalah.php',
-    'gejala'    => 'pages/master/gejala.php',
-    'aturan'    => 'pages/master/aturan.php',
-    'konsultasi'=> 'pages/konsultasi/mulai.php',
-    'proses'    => 'pages/konsultasi/proses.php',
-    'hasil'     => 'pages/konsultasi/hasil.php',
-    'riwayat'   => 'pages/konsultasi/riwayat.php',
-    'profil'    => 'pages/profil.php',
-    'login'     => 'pages/login.php',
-    'logout'    => 'pages/logout.php'
+    'dashboard'   => 'pages/dashboard.php',
+    'siswa'       => 'pages/master/siswa.php',
+    'kepribadian' => 'pages/master/kepribadian.php',
+    'gejala'      => 'pages/master/gejala.php',
+    'aturan'      => 'pages/master/aturan.php',
+    'konsultasi'  => 'pages/konsultasi/mulai.php',
+    'proses'      => 'pages/konsultasi/proses.php',
+    'hasil'       => 'pages/konsultasi/hasil.php',
+    'riwayat'     => 'pages/konsultasi/riwayat.php',
+    'profil'      => 'pages/profil.php',
+    'login'       => 'pages/login.php',
+    'logout'      => 'pages/logout.php',
 ];
 
 // Cek autentikasi (kecuali untuk halaman login)

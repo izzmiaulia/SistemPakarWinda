@@ -47,13 +47,13 @@
                 <i data-lucide="users" class="<?= getIconClass($page, 'siswa') ?>"></i>
                 <span class="menu-text whitespace-nowrap">Data Siswa</span>
             </a>
-            <a href="index.php?page=masalah" class="<?= getMenuClass($page, 'masalah') ?>" title="Data Masalah">
-                <i data-lucide="alert-triangle" class="<?= getIconClass($page, 'masalah') ?>"></i>
-                <span class="menu-text whitespace-nowrap">Data Masalah</span>
+            <a href="index.php?page=kepribadian" class="<?= getMenuClass($page, 'kepribadian') ?>" title="Tipe Kepribadian">
+                <i data-lucide="user-square" class="<?= getIconClass($page, 'kepribadian') ?>"></i>
+                <span class="menu-text whitespace-nowrap">Tipe Kepribadian</span>
             </a>
-            <a href="index.php?page=gejala" class="<?= getMenuClass($page, 'gejala') ?>" title="Data Gejala">
+            <a href="index.php?page=gejala" class="<?= getMenuClass($page, 'gejala') ?>" title="Indikator">
                 <i data-lucide="activity" class="<?= getIconClass($page, 'gejala') ?>"></i>
-                <span class="menu-text whitespace-nowrap">Data Gejala</span>
+                <span class="menu-text whitespace-nowrap">Indikator</span>
             </a>
             <a href="index.php?page=aturan" class="<?= getMenuClass($page, 'aturan') ?>" title="Aturan Pakar">
                 <i data-lucide="git-merge" class="<?= getIconClass($page, 'aturan') ?>"></i>
