@@ -1,10 +1,15 @@
 # PakarBK — Sistem Pakar Bimbingan & Konseling
 
-Aplikasi web untuk membantu Guru BK melakukan identifikasi awal terhadap siswa
-berdasarkan indikator yang teramati, lengkap dengan rincian langkah perhitungan
-dan laporan yang dapat diekspor ke Excel.
+Aplikasi web untuk membantu Guru BK mengidentifikasi kecenderungan tipe
+kepribadian siswa (**DISC**) berdasarkan indikator yang dijawab, memakai metode
+**Certainty Factor** dan **Backward Chaining**.
 
 Dibangun dengan **PHP native + MySQL/MariaDB**, tanpa framework.
+
+> **Status:** seluruh alur sudah berjalan penuh &mdash; basis pengetahuan, mesin
+> perhitungan, tanya-jawab konsultasi, halaman hasil, hingga ekspor rincian
+> perhitungan ke Excel. Keluaran aplikasi telah dicocokkan dengan angka acuan
+> penelitian dan sama persis sampai lima angka di belakang koma.
 
 ---
 
@@ -12,15 +17,22 @@ Dibangun dengan **PHP native + MySQL/MariaDB**, tanpa framework.
 
 - **Autentikasi** — login/logout dengan password ter-hash (bcrypt)
 - **Manajemen Siswa** — CRUD, pencarian, filter kelas, paginasi, **impor & ekspor Excel**
-- **Basis Pengetahuan** — CRUD masalah, gejala, dan aturan pakar beserta nilai keyakinannya
-- **Konsultasi Interaktif** — tanya-jawab indikator satu per satu, dengan penelusuran
-  *backward chaining* dan *backtracking* otomatis
-- **Hasil Analisis** — persentase keyakinan, tingkat keparahan, rekomendasi penanganan,
-  dan **rincian langkah perhitungan** yang bisa ditelusuri
-- **Ekspor Perhitungan** — unduh seluruh tahapan perhitungan sebagai berkas `.xlsx` berformat
-- **Riwayat** — pencarian, paginasi, detail, hapus satuan maupun massal
-- **Dashboard** — statistik ringkas, distribusi tingkat keparahan, dan tren masalah
+- **Tipe Kepribadian** — empat hipotesis DISC beserta deskripsi dan rekomendasi layanan BK
+- **Indikator** — 16 pernyataan swalapor yang menjadi dasar penilaian
+- **Aturan Pakar** — relasi tipe ↔ indikator beserta nilai keyakinan pakar, **dapat diubah
+  langsung dari antarmuka** sehingga hasil validasi pakar tidak memerlukan perubahan kode
+- **Mesin Certainty Factor** — perhitungan berikut rincian langkahnya, dilengkapi berkas uji
+- **Konsultasi Interaktif** — pernyataan ditampilkan satu per satu dengan lima tingkat
+  keyakinan, disertai log penelusuran *backward chaining* yang tampil langsung di layar
+- **Hasil Analisis** — peringkat keempat tipe beserta rincian perhitungan tiap langkah,
+  bukan satu angka tunggal
+- **Ekspor Perhitungan** — unduh seluruh tahapan sebagai berkas `.xlsx` berformat
+- **Riwayat** — pencarian, paginasi, tautan ke hasil lengkap, hapus satuan maupun massal
+- **Dashboard** — statistik ringkas, distribusi tipe kepribadian, dan sebarannya per kelas
 - **Profil Sekolah** — ubah nama sekolah, unggah logo, ganti kredensial
+
+Keamanan: seluruh formulir dilindungi token CSRF, penghapusan hanya melalui POST,
+sesi diperbarui setelah masuk, dan percobaan masuk dibatasi.
 
 ---
 
@@ -139,30 +151,37 @@ saat pertama kali dijalankan (lihat [`index.php`](index.php)).
 ```
 SistemPakarWinda/
 ├── index.php               Front controller — sesi, autoload, routing, render layout
-├── download_excel.php      Ekspor tahapan perhitungan ke .xlsx
-├── db_pakar_bk.sql         Skema database + data contoh
+├── download_perhitungan.php  Ekspor rincian perhitungan ke .xlsx
+├── db_pakar_bk.sql         Skema database + basis pengetahuan
 ├── composer.json
 │
 ├── config/
-│   └── koneksi.php         Autoloader sederhana + inisialisasi koneksi
+│   ├── koneksi.php         Autoloader sederhana + inisialisasi koneksi
+│   └── keamanan.php        Helper token CSRF
 │
 ├── models/                 Lapisan akses data (repository)
 │   ├── Database.php        Koneksi PDO
 │   ├── Siswa.php
-│   ├── Masalah.php         Hipotesis / goal
-│   ├── Gejala.php          Evidence / indikator
-│   ├── Aturan.php          Relasi masalah ↔ gejala + nilai keyakinan
+│   ├── Kepribadian.php     Hipotesis H01–H04 beserta rule R01–R04
+│   ├── Gejala.php          Indikator G01–G16
+│   ├── Aturan.php          Relasi tipe ↔ indikator + nilai CF pakar
 │   ├── Konsultasi.php      Simpan, riwayat, detail, statistik
-│   └── MesinInferensi.php  Mesin perhitungan
+│   └── MesinInferensiCF.php  Mesin perhitungan Certainty Factor
+│
+├── tests/
+│   └── test_cf.php         Uji mesin terhadap angka acuan penelitian
 │
 ├── layouts/                header · sidebar · footer
 │
 └── pages/
     ├── dashboard.php
     ├── login.php · logout.php · profil.php
-    ├── master/             siswa · masalah · gejala · aturan
+    ├── master/             siswa · kepribadian · gejala · aturan
     └── konsultasi/         mulai · proses · hasil · riwayat
 ```
+
+Berkas berakhiran `.bak` adalah kode metode sebelumnya yang sengaja disimpan
+sebagai rujukan selama masa migrasi.
 
 **Routing** memakai daftar putih (*whitelist*) di `index.php`. Halaman diakses lewat
 parameter `?page=`, misalnya `index.php?page=dashboard`. Semua halaman selain `login`
@@ -175,16 +194,27 @@ memerlukan sesi yang aktif.
 ```
 admin                 Akun pengguna + identitas sekolah
 siswa                 Data peserta didik
-masalah               Hipotesis yang dapat disimpulkan
-gejala                Indikator yang ditanyakan
-aturan                Relasi masalah ↔ gejala beserta nilai keyakinan pakar
+
+kepribadian           Hipotesis H01–H04 (tipe D/I/S/C) + rule R01–R04,
+                      deskripsi, dan rekomendasi layanan BK
+gejala                16 indikator pernyataan (G01–G16)
+aturan                Relasi kepribadian ↔ gejala + nilai CF pakar (0–1)
+
 riwayat_konsultasi    Sesi konsultasi per siswa
-├── detail_konsultasi Indikator yang terpenuhi pada sesi tersebut
-└── hasil_konsultasi  Hasil akhir + log penelusuran
+├── detail_konsultasi Jawaban atas SETIAP indikator + bobot pakar saat itu
+├── hasil_konsultasi  Tipe dengan keyakinan tertinggi + log penelusuran
+└── hasil_detail      Skor keempat tipe beserta peringkatnya
 ```
 
 Seluruh tabel memakai InnoDB dengan *foreign key* `ON DELETE CASCADE`, sehingga
 menghapus satu siswa akan ikut membersihkan seluruh riwayat konsultasinya.
+
+Collation yang dipakai adalah `utf8mb4_general_ci` agar dapat dipasang baik pada
+MariaDB maupun MySQL 8.
+
+Kolom `cf_pakar` pada `detail_konsultasi` menyimpan bobot pakar **pada saat
+konsultasi dijalankan**, sehingga rincian perhitungan sebuah sesi tetap dapat
+direproduksi persis walaupun bobot pada tabel `aturan` diubah setelahnya.
 
 ---
 
@@ -212,6 +242,28 @@ Skala keyakinan pengguna:
 
 Setiap sesi konsultasi menyimpan log penelusuran, sehingga proses pengambilan
 kesimpulan dapat ditinjau ulang dan tidak berupa kotak hitam.
+
+### Basis pengetahuan
+
+```
+R01 : H01 Dominance  ← G01, G02, G03, G04
+R02 : H02 Influence  ← G05, G06, G07, G08
+R03 : H03 Steadiness ← G09, G10, G11, G12
+R04 : H04 Compliance ← G13, G14, G15, G16
+```
+
+Nilai keyakinan pakar tersimpan pada tabel `aturan` dan dapat diubah melalui menu
+**Aturan Pakar** tanpa menyentuh kode.
+
+### Menguji mesin perhitungan
+
+```bash
+php tests/test_cf.php
+```
+
+Berkas uji mencocokkan keluaran mesin dengan angka acuan penelitian sampai lima
+angka di belakang koma, mencakup CF evidence tiap indikator, kombinasi bertahap,
+CF akhir keempat hipotesis, penentuan peringkat, dan kasus tepi.
 
 ---
 
