@@ -37,11 +37,11 @@ class Kepribadian
         return $stmt->fetch();
     }
 
-    public function tambahKepribadian($kode, $kode_rule, $tipe, $nama, $deskripsi, $rekomendasi)
+    public function tambahKepribadian($kode, $kode_rule, $tipe, $nama, $deskripsi, $rekomendasi, $id_admin = null)
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO kepribadian (kode, kode_rule, tipe, nama, deskripsi, rekomendasi)
-             VALUES (:kode, :kode_rule, :tipe, :nama, :deskripsi, :rekomendasi)"
+            "INSERT INTO kepribadian (kode, kode_rule, tipe, nama, deskripsi, rekomendasi, id_admin)
+             VALUES (:kode, :kode_rule, :tipe, :nama, :deskripsi, :rekomendasi, :id_admin)"
         );
         return $stmt->execute([
             ':kode'        => $kode,
@@ -50,15 +50,17 @@ class Kepribadian
             ':nama'        => $nama,
             ':deskripsi'   => $deskripsi,
             ':rekomendasi' => $rekomendasi,
+            ':id_admin'    => $id_admin,
         ]);
     }
 
-    public function ubahKepribadian($id, $kode, $kode_rule, $tipe, $nama, $deskripsi, $rekomendasi)
+    public function ubahKepribadian($id, $kode, $kode_rule, $tipe, $nama, $deskripsi, $rekomendasi, $id_admin = null)
     {
         $stmt = $this->db->prepare(
             "UPDATE kepribadian
                 SET kode = :kode, kode_rule = :kode_rule, tipe = :tipe,
-                    nama = :nama, deskripsi = :deskripsi, rekomendasi = :rekomendasi
+                    nama = :nama, deskripsi = :deskripsi, rekomendasi = :rekomendasi,
+                    id_admin = :id_admin
               WHERE id_kepribadian = :id"
         );
         return $stmt->execute([
@@ -69,6 +71,7 @@ class Kepribadian
             ':nama'        => $nama,
             ':deskripsi'   => $deskripsi,
             ':rekomendasi' => $rekomendasi,
+            ':id_admin'    => $id_admin,
         ]);
     }
 

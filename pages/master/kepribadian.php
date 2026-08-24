@@ -22,7 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $kepribadianModel->tambahKepribadian(
                 $_POST['kode'], $_POST['kode_rule'], $_POST['tipe'],
-                $_POST['nama'], $_POST['deskripsi'], $_POST['rekomendasi']
+                $_POST['nama'], $_POST['deskripsi'], $_POST['rekomendasi'],
+                $_SESSION['id_admin'] ?? null
             );
             setFlash('success', 'Tipe kepribadian berhasil ditambahkan.');
         }
@@ -36,7 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $kepribadianModel->ubahKepribadian(
                 $id, $_POST['kode'], $_POST['kode_rule'], $_POST['tipe'],
-                $_POST['nama'], $_POST['deskripsi'], $_POST['rekomendasi']
+                $_POST['nama'], $_POST['deskripsi'], $_POST['rekomendasi'],
+                $_SESSION['id_admin'] ?? null
             );
             setFlash('success', 'Tipe kepribadian berhasil diubah.');
         }

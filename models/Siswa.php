@@ -19,14 +19,14 @@ class Siswa {
         return $stmt->fetch();
     }
 
-    public function tambahSiswa($nis, $nama, $kelas, $jk) {
-        $stmt = $this->db->prepare("INSERT INTO siswa (nis, nama_siswa, kelas, jenis_kelamin) VALUES (:nis, :nama, :kelas, :jk)");
-        return $stmt->execute([':nis' => $nis, ':nama' => $nama, ':kelas' => $kelas, ':jk' => $jk]);
+    public function tambahSiswa($nis, $nama, $kelas, $jk, $id_admin = null) {
+        $stmt = $this->db->prepare("INSERT INTO siswa (nis, nama_siswa, kelas, jenis_kelamin, id_admin) VALUES (:nis, :nama, :kelas, :jk, :id_admin)");
+        return $stmt->execute([':nis' => $nis, ':nama' => $nama, ':kelas' => $kelas, ':jk' => $jk, ':id_admin' => $id_admin]);
     }
 
-    public function ubahSiswa($id, $nis, $nama, $kelas, $jk) {
-        $stmt = $this->db->prepare("UPDATE siswa SET nis = :nis, nama_siswa = :nama, kelas = :kelas, jenis_kelamin = :jk WHERE id_siswa = :id");
-        return $stmt->execute([':id' => $id, ':nis' => $nis, ':nama' => $nama, ':kelas' => $kelas, ':jk' => $jk]);
+    public function ubahSiswa($id, $nis, $nama, $kelas, $jk, $id_admin = null) {
+        $stmt = $this->db->prepare("UPDATE siswa SET nis = :nis, nama_siswa = :nama, kelas = :kelas, jenis_kelamin = :jk, id_admin = :id_admin WHERE id_siswa = :id");
+        return $stmt->execute([':id' => $id, ':nis' => $nis, ':nama' => $nama, ':kelas' => $kelas, ':jk' => $jk, ':id_admin' => $id_admin]);
     }
 
     public function hapusSiswa($id) {

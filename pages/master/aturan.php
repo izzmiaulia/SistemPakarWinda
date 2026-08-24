@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } elseif ($nilai_cf < 0 || $nilai_cf > 1) {
             setFlash('error', 'Gagal: Nilai CF harus berada pada rentang 0 sampai 1.');
         } else {
-            $aturanModel->tambahAturan($id_kepribadian, $id_gejala, $nilai_cf);
+            $aturanModel->tambahAturan($id_kepribadian, $id_gejala, $nilai_cf, $_SESSION['id_admin'] ?? null);
             setFlash('success', 'Relasi aturan baru berhasil ditambahkan.');
         }
         header("Location: index.php?page=aturan"); exit;
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($nilai_cf < 0 || $nilai_cf > 1) {
             setFlash('error', 'Gagal: Nilai CF harus berada pada rentang 0 sampai 1.');
         } else {
-            $aturanModel->ubahNilaiCf($id_aturan, $nilai_cf);
+            $aturanModel->ubahNilaiCf($id_aturan, $nilai_cf, $_SESSION['id_admin'] ?? null);
             setFlash('success', 'Nilai keyakinan pakar berhasil diperbarui.');
         }
         header("Location: index.php?page=aturan"); exit;

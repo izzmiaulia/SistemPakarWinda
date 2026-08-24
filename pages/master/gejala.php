@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($gejalaModel->cekKodeAda($_POST['kode'])) {
             setFlash('error', 'Gagal: Kode gejala sudah digunakan.');
         } else {
-            $gejalaModel->tambahGejala($_POST['kode'], $_POST['nama']);
+            $gejalaModel->tambahGejala($_POST['kode'], $_POST['nama'], $_SESSION['id_admin'] ?? null);
             setFlash('success', 'Data gejala berhasil ditambahkan.');
         }
         header("Location: index.php?page=gejala"); exit;
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($gejalaModel->cekKodeAda($_POST['kode'], $_POST['id_gejala'])) {
             setFlash('error', 'Gagal: Kode gejala sudah digunakan oleh data lain.');
         } else {
-            $gejalaModel->ubahGejala($_POST['id_gejala'], $_POST['kode'], $_POST['nama']);
+            $gejalaModel->ubahGejala($_POST['id_gejala'], $_POST['kode'], $_POST['nama'], $_SESSION['id_admin'] ?? null);
             setFlash('success', 'Data gejala berhasil diubah.');
         }
         header("Location: index.php?page=gejala"); exit;

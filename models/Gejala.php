@@ -19,14 +19,14 @@ class Gejala {
         return $stmt->fetch();
     }
 
-    public function tambahGejala($kode, $nama) {
-        $stmt = $this->db->prepare("INSERT INTO gejala (kode_gejala, nama_gejala) VALUES (:kode, :nama)");
-        return $stmt->execute([':kode' => $kode, ':nama' => $nama]);
+    public function tambahGejala($kode, $nama, $id_admin = null) {
+        $stmt = $this->db->prepare("INSERT INTO gejala (kode_gejala, nama_gejala, id_admin) VALUES (:kode, :nama, :id_admin)");
+        return $stmt->execute([':kode' => $kode, ':nama' => $nama, ':id_admin' => $id_admin]);
     }
 
-    public function ubahGejala($id, $kode, $nama) {
-        $stmt = $this->db->prepare("UPDATE gejala SET kode_gejala = :kode, nama_gejala = :nama WHERE id_gejala = :id");
-        return $stmt->execute([':id' => $id, ':kode' => $kode, ':nama' => $nama]);
+    public function ubahGejala($id, $kode, $nama, $id_admin = null) {
+        $stmt = $this->db->prepare("UPDATE gejala SET kode_gejala = :kode, nama_gejala = :nama, id_admin = :id_admin WHERE id_gejala = :id");
+        return $stmt->execute([':id' => $id, ':kode' => $kode, ':nama' => $nama, ':id_admin' => $id_admin]);
     }
 
     public function hapusGejala($id) {

@@ -101,16 +101,17 @@ class Aturan
         return array_values($hasil);
     }
 
-    public function tambahAturan($id_kepribadian, $id_gejala, $nilai_cf)
+    public function tambahAturan($id_kepribadian, $id_gejala, $nilai_cf, $id_admin = null)
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO aturan (id_kepribadian, id_gejala, nilai_cf)
-             VALUES (:id_kepribadian, :id_gejala, :nilai_cf)"
+            "INSERT INTO aturan (id_kepribadian, id_gejala, nilai_cf, id_admin)
+             VALUES (:id_kepribadian, :id_gejala, :nilai_cf, :id_admin)"
         );
         return $stmt->execute([
             ':id_kepribadian' => $id_kepribadian,
             ':id_gejala'      => $id_gejala,
             ':nilai_cf'       => $nilai_cf,
+            ':id_admin'       => $id_admin,
         ]);
     }
 
@@ -118,10 +119,10 @@ class Aturan
      * Ubah nilai keyakinan pakar pada satu aturan.
      * Dipakai agar hasil validasi pakar dapat diterapkan tanpa mengubah kode.
      */
-    public function ubahNilaiCf($id_aturan, $nilai_cf)
+    public function ubahNilaiCf($id_aturan, $nilai_cf, $id_admin = null)
     {
-        $stmt = $this->db->prepare("UPDATE aturan SET nilai_cf = :nilai_cf WHERE id_aturan = :id");
-        return $stmt->execute([':id' => $id_aturan, ':nilai_cf' => $nilai_cf]);
+        $stmt = $this->db->prepare("UPDATE aturan SET nilai_cf = :nilai_cf, id_admin = :id_admin WHERE id_aturan = :id");
+        return $stmt->execute([':id' => $id_aturan, ':nilai_cf' => $nilai_cf, ':id_admin' => $id_admin]);
     }
 
     public function hapusAturan($id_aturan)

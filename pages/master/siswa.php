@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($siswaModel->cekNisAda($_POST['nis'])) {
             setFlash('error', 'Gagal: NIS sudah terdaftar untuk siswa lain.');
         } else {
-            $siswaModel->tambahSiswa($_POST['nis'], $_POST['nama'], $_POST['kelas'], $_POST['jk']);
+            $siswaModel->tambahSiswa($_POST['nis'], $_POST['nama'], $_POST['kelas'], $_POST['jk'], $_SESSION['id_admin'] ?? null);
             setFlash('success', 'Data siswa berhasil ditambahkan.');
         }
         header("Location: index.php?page=siswa"); exit;
