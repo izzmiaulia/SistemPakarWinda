@@ -1,6 +1,14 @@
 <?php
 csrf_wajib();
 
+// Ambil baris admin milik SESI yang sedang login, bukan admin_profile (selalu baris #1,
+// dipakai untuk branding sidebar/header pra-login). Sebelum kolom role ditambahkan, kedua
+// hal ini kebetulan selalu sama karena cuma ada satu akun -- begitu akun kedua ada, siapa
+// pun yang login akan salah melihat/mengedit akun #1 kalau ini tidak dipisah.
+$stmtSelf = $db->prepare("SELECT * FROM admin WHERE id_admin = :id");
+$stmtSelf->execute([':id' => $_SESSION['id_admin']]);
+$myAdmin = $stmtSelf->fetch();
+
 // Handle form submission
 $success = '';
 $error = '';
@@ -14,63 +22,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validasi input wajib
     if (empty($nama_lengkap) || empty($username) || empty($nama_sekolah)) {
         $error = 'Semua field wajib diisi (kecuali password baru).';
+    } elseif (!empty($_SESSION['harus_ganti_password']) && empty($password)) {
+        $error = 'Password wajib diganti sebelum melanjutkan.';
     } else {
         // Cek username unik di database (kecuali id_admin yang sekarang)
         $stmtUser = $db->prepare("SELECT COUNT(*) FROM admin WHERE username = :user AND id_admin != :id");
-        $stmtUser->execute([':user' => $username, ':id' => $admin_profile['id_admin']]);
+        $stmtUser->execute([':user' => $username, ':id' => $myAdmin['id_admin']]);
         if ($stmtUser->fetchColumn() > 0) {
             $error = 'Username sudah digunakan oleh akun lain.';
         } else {
             // Handle file upload logo_sekolah
-            $logo_path = $admin_profile['logo_sekolah'];
+            $logo_path = $myAdmin['logo_sekolah'];
             if (isset($_FILES['logo_sekolah']) && $_FILES['logo_sekolah']['error'] === UPLOAD_ERR_OK) {
-                $fileTmpPath = $_FILES['logo_sekolah']['tmp_name'];
-                $fileName = $_FILES['logo_sekolah']['name'];
-                $fileSize = $_FILES['logo_sekolah']['size'];
-                $fileType = $_FILES['logo_sekolah']['type'];
-                
-                $fileNameCmps = explode(".", $fileName);
-                $fileExtension = strtolower(end($fileNameCmps));
-                
-                $allowedExtensions = ['jpg', 'jpeg', 'png'];
-                if (in_array($fileExtension, $allowedExtensions)) {
+                $hasilValidasi = berkas_valid_gambar($_FILES['logo_sekolah']);
+
+                if ($hasilValidasi['ok']) {
                     // Cek direktori uploads
                     if (!is_dir('uploads')) {
-                        mkdir('uploads', 0777, true);
+                        mkdir('uploads', 0755, true);
                     }
-                    
-                    // Path file baru
-                    $newFileName = 'logo_' . time() . '.' . $fileExtension;
+
+                    // Path file baru -- ekstensi diturunkan dari MIME asli, bukan nama kiriman klien
+                    $newFileName = 'logo_' . time() . '.' . $hasilValidasi['ekstensi'];
                     $uploadFileDir = 'uploads/';
                     $dest_path = $uploadFileDir . $newFileName;
-                    
-                    if (move_uploaded_file($fileTmpPath, $dest_path)) {
+
+                    if (move_uploaded_file($_FILES['logo_sekolah']['tmp_name'], $dest_path)) {
                         // Hapus file lama jika ada
-                        if (!empty($admin_profile['logo_sekolah']) && file_exists($admin_profile['logo_sekolah'])) {
-                            @unlink($admin_profile['logo_sekolah']);
+                        if (!empty($myAdmin['logo_sekolah']) && file_exists($myAdmin['logo_sekolah'])) {
+                            @unlink($myAdmin['logo_sekolah']);
                         }
                         $logo_path = $dest_path;
                     } else {
                         $error = 'Ada masalah saat mengunggah file logo.';
                     }
                 } else {
-                    $error = 'Unggahan gagal. Jenis file yang diperbolehkan hanya: ' . implode(',', $allowedExtensions);
+                    $error = $hasilValidasi['error'];
                 }
             }
 
             if (empty($error)) {
                 // Siapkan SQL update
                 if (!empty($password)) {
-                    // Update password baru
+                    // Update password baru -- sekaligus tandai kewajiban ganti password sudah selesai
                     $passHash = password_hash($password, PASSWORD_BCRYPT);
-                    $stmt = $db->prepare("UPDATE admin SET username = :user, password = :pass, nama_lengkap = :nama, nama_sekolah = :sekolah, logo_sekolah = :logo WHERE id_admin = :id");
+                    $stmt = $db->prepare("UPDATE admin SET username = :user, password = :pass, nama_lengkap = :nama, nama_sekolah = :sekolah, logo_sekolah = :logo, harus_ganti_password = 0 WHERE id_admin = :id");
                     $params = [
                         ':user' => $username,
                         ':pass' => $passHash,
                         ':nama' => $nama_lengkap,
                         ':sekolah' => $nama_sekolah,
                         ':logo' => $logo_path,
-                        ':id' => $admin_profile['id_admin']
+                        ':id' => $myAdmin['id_admin']
                     ];
                 } else {
                     // Update tanpa ganti password
@@ -80,14 +83,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':nama' => $nama_lengkap,
                         ':sekolah' => $nama_sekolah,
                         ':logo' => $logo_path,
-                        ':id' => $admin_profile['id_admin']
+                        ':id' => $myAdmin['id_admin']
                     ];
                 }
 
                 if ($stmt->execute($params)) {
-                    // Update session/global variable agar langsung terefleksi di sidebar
-                    $admin_profile = $db->query("SELECT * FROM admin WHERE id_admin = " . $admin_profile['id_admin'])->fetch();
-                    $GLOBALS['admin_profile'] = $admin_profile;
+                    if (!empty($password)) {
+                        $_SESSION['harus_ganti_password'] = false;
+                    }
+                    // Refresh baris milik sesi
+                    $myAdmin = $db->query("SELECT * FROM admin WHERE id_admin = " . (int) $myAdmin['id_admin'])->fetch();
+                    // admin_profile (baris #1) hanya perlu diperbarui kalau akun yang login
+                    // memang baris #1 -- supaya branding sidebar/header pra-login tetap benar.
+                    if ((int) $myAdmin['id_admin'] === (int) $admin_profile['id_admin']) {
+                        $admin_profile = $myAdmin;
+                        $GLOBALS['admin_profile'] = $admin_profile;
+                    }
                     $success = 'Profil sekolah & admin berhasil diperbarui!';
                 } else {
                     $error = 'Gagal menyimpan perubahan ke database.';
@@ -119,6 +130,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 <?php endif; ?>
 
+<?php if (!empty($_SESSION['harus_ganti_password'])): ?>
+<div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+    <i data-lucide="shield-alert" class="w-5 h-5 text-red-600 shrink-0 mt-0.5"></i>
+    <div class="text-sm">
+        <p class="font-bold text-red-800">Kata sandi wajib diganti sebelum melanjutkan</p>
+        <p class="text-red-700 mt-0.5">Isi kolom "Kata Sandi Baru" di bawah ini dan simpan. Halaman lain tidak dapat diakses sebelum ini selesai.</p>
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Form Profil -->
     <div class="col-span-1 md:col-span-2">
@@ -137,14 +158,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
                             <i data-lucide="user" class="w-4 h-4 text-slate-400"></i> Nama Lengkap Admin
                         </label>
-                        <input type="text" name="nama_lengkap" required value="<?= htmlspecialchars($admin_profile['nama_lengkap']) ?>" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
+                        <input type="text" name="nama_lengkap" required value="<?= htmlspecialchars($myAdmin['nama_lengkap']) ?>" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
                             <i data-lucide="user-check" class="w-4 h-4 text-slate-400"></i> Username Baru/Tetap
                         </label>
-                        <input type="text" name="username" required value="<?= htmlspecialchars($admin_profile['username']) ?>" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
+                        <input type="text" name="username" required value="<?= htmlspecialchars($myAdmin['username']) ?>" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
                     </div>
                 </div>
 
@@ -152,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i> Kata Sandi Baru
                     </label>
-                    <input type="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
+                    <input type="password" name="password" placeholder="<?= !empty($_SESSION['harus_ganti_password']) ? 'Wajib diisi sebelum melanjutkan' : 'Kosongkan jika tidak ingin mengubah password' ?>" class="w-full border <?= !empty($_SESSION['harus_ganti_password']) ? 'border-red-300' : 'border-slate-300' ?> rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
                     <p class="text-[10px] text-slate-400 mt-1.5">Password disimpan dengan enkripsi searah (Bcrypt) untuk keamanan.</p>
                 </div>
 
@@ -163,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
                                 <i data-lucide="graduation-cap" class="w-4 h-4 text-slate-400"></i> Nama Sekolah
                             </label>
-                            <input type="text" name="nama_sekolah" required value="<?= htmlspecialchars($admin_profile['nama_sekolah']) ?>" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
+                            <input type="text" name="nama_sekolah" required value="<?= htmlspecialchars($myAdmin['nama_sekolah']) ?>" class="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white text-slate-700 text-sm">
                         </div>
 
                         <div>
@@ -189,10 +210,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="col-span-1">
         <div class="card p-6 flex flex-col items-center justify-center text-center space-y-4">
             <h4 class="font-bold text-slate-700 text-sm w-full text-left border-b pb-2">Pratinjau Logo</h4>
-            <?php if (!empty($admin_profile['logo_sekolah']) && file_exists($admin_profile['logo_sekolah'])): ?>
-                <img src="<?= $admin_profile['logo_sekolah'] ?>" class="w-32 h-32 object-contain rounded-xl p-2 bg-slate-50 border border-slate-150 shadow-sm" alt="Logo Sekolah">
+            <?php if (!empty($myAdmin['logo_sekolah']) && file_exists($myAdmin['logo_sekolah'])): ?>
+                <img src="<?= $myAdmin['logo_sekolah'] ?>" class="w-32 h-32 object-contain rounded-xl p-2 bg-slate-50 border border-slate-150 shadow-sm" alt="Logo Sekolah">
                 <div>
-                    <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($admin_profile['nama_sekolah']) ?></p>
+                    <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($myAdmin['nama_sekolah']) ?></p>
                     <p class="text-xs text-slate-500 mt-1">Logo Sekolah Aktif</p>
                 </div>
             <?php else: ?>
