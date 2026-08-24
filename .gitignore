@@ -24,3 +24,6 @@ Thumbs.db
 # Editor
 /.vscode/
 /.idea/
+
+# Arsip implementasi lama (tetap di lokal, jangan dilayani web server)
+*.bak
