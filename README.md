@@ -9,7 +9,13 @@ Dibangun dengan **PHP native + MySQL/MariaDB**, tanpa framework.
 > **Status:** seluruh alur sudah berjalan penuh &mdash; basis pengetahuan, mesin
 > perhitungan, tanya-jawab konsultasi, halaman hasil, hingga ekspor rincian
 > perhitungan ke Excel. Keluaran aplikasi telah dicocokkan dengan angka acuan
-> penelitian dan sama persis sampai lima angka di belakang koma.
+> penelitian dan sama persis sampai lima angka di belakang koma. Lapisan keamanan
+> (peran akun, validasi unggahan, jejak audit) sudah terpasang — rinciannya di
+> bagian [Keamanan](#keamanan).
+>
+> Yang masih menunggu data dari pihak sekolah: teks rekomendasi final tiap tipe
+> kepribadian, hasil validasi bobot oleh pakar BK, data siswa sebenarnya, dan
+> logo sekolah. Semuanya dapat diisi lewat antarmuka tanpa mengubah kode.
 
 ---
 
@@ -33,8 +39,22 @@ Dibangun dengan **PHP native + MySQL/MariaDB**, tanpa framework.
 - **Dashboard** — statistik ringkas, distribusi tipe kepribadian, dan sebarannya per kelas
 - **Profil Sekolah** — ubah nama sekolah, unggah logo, ganti kredensial
 
-Keamanan: seluruh formulir dilindungi token CSRF, penghapusan hanya melalui POST,
-sesi diperbarui setelah masuk, dan percobaan masuk dibatasi.
+### Keamanan
+
+- **Token CSRF** pada seluruh formulir; penghapusan hanya menerima POST bertoken
+- **Sesi** diperbarui (`session_regenerate_id`) setelah berhasil masuk
+- **Percobaan masuk dibatasi** — terkunci sementara setelah beberapa kali gagal
+- **Gerbang peran** di sisi server (`role_wajib`), bukan sekadar menyembunyikan menu —
+  navigasi langsung ke URL halaman master data tetap ditolak untuk peran `guru_bk`
+- **Validasi berkas unggahan** berdasarkan isi berkas sungguhan (MIME + *magic byte*),
+  bukan ekstensi nama berkas yang gampang dipalsukan. Berlaku untuk logo sekolah
+  maupun impor data siswa
+- **Folder `uploads/` dikunci** lewat `.htaccess` — apa pun yang tersimpan di sana
+  tidak pernah dieksekusi sebagai PHP
+- **Jejak audit ringan** — kolom `id_admin`, `created_at`, dan `updated_at` pada
+  keempat tabel master mencatat siapa mengubah apa dan kapan
+- **Kredensial tidak ter-commit** — pengaturan database dan password bawaan berada
+  di `config/local.php` yang di-`.gitignore`
 
 ---
 
@@ -189,6 +209,9 @@ SistemPakarWinda/
 ├── tests/
 │   └── test_cf.php         Uji mesin terhadap angka acuan penelitian
 │
+├── uploads/
+│   └── .htaccess           Kunci eksekusi PHP di folder unggahan
+│
 ├── layouts/                header · sidebar · footer
 │
 └── pages/
@@ -198,12 +221,19 @@ SistemPakarWinda/
     └── konsultasi/         mulai · proses · hasil · riwayat
 ```
 
-Berkas berakhiran `.bak` adalah kode metode sebelumnya yang sengaja disimpan
-sebagai rujukan selama masa migrasi.
+Isi folder `uploads/` (logo yang diunggah) tidak ikut ter-commit — hanya berkas
+`.htaccess` penguncinya yang disertakan.
 
 **Routing** memakai daftar putih (*whitelist*) di `index.php`. Halaman diakses lewat
-parameter `?page=`, misalnya `index.php?page=dashboard`. Semua halaman selain `login`
-memerlukan sesi yang aktif.
+parameter `?page=`, misalnya `index.php?page=dashboard`. Tiga lapis penjagaan
+dijalankan berurutan sebelum halaman dimuat:
+
+1. **Sesi** — semua halaman selain `login` memerlukan sesi aktif
+2. **Wajib ganti password** — selama `harus_ganti_password` masih menyala, seluruh
+   halaman selain `login`/`logout`/`profil` dialihkan paksa ke halaman Profil
+3. **Peran** — `role_wajib('pakar')` di awal `kepribadian.php`, `gejala.php`, dan
+   `aturan.php`, dipanggil **sebelum** `csrf_wajib()` karena otorisasi juga berlaku
+   untuk permintaan GET, bukan hanya POST
 
 ---
 
@@ -336,6 +366,25 @@ memakai nilai bawaan XAMPP (`root`, tanpa password).
 
 Aplikasi memuat Tailwind, Lucide, SweetAlert2, dan Tom-Select melalui CDN, sehingga
 memerlukan koneksi internet saat dijalankan.
+
+</details>
+
+<details>
+<summary><b>Peringatan di console: "cdn.tailwindcss.com should not be used in production"</b></summary>
+
+**Ini normal dan memang sengaja dibiarkan tampil.**
+
+Tailwind dimuat lewat CDN, belum melalui proses *build* lokal. Peringatan itu adalah
+pemberitahuan resmi dari Tailwind bahwa cara ini tidak dianjurkan untuk lingkungan
+produksi sungguhan.
+
+Kode sebelumnya menimpa `console.warn()` untuk menyaring pesan tersebut agar tidak
+muncul. Cara itu sudah dibuang — membungkam peringatan tidak menghilangkan
+keterbatasannya, hanya menyembunyikannya dari orang yang perlu tahu.
+
+Untuk skala pemakaian aplikasi ini (satu sekolah, dijalankan lokal), CDN masih
+memadai. Bila nanti dipasang di server produksi, Tailwind sebaiknya dipasang lewat
+Tailwind CLI atau PostCSS.
 
 </details>
 
