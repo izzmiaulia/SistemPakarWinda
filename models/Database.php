@@ -1,12 +1,25 @@
 <?php
 class Database {
-    private $host = "localhost";
-    private $user = "root";
-    private $pass = "";
-    private $dbname = "db_pakar_bk";
+    private $host;
+    private $user;
+    private $pass;
+    private $dbname;
     private $conn;
 
     public function __construct() {
+        // Kredensial lokal (di-gitignore) menang atas nilai bawaan XAMPP.
+        // Lihat config/local.example.php untuk cara mengaturnya.
+        $lokal = [];
+        $berkasLokal = __DIR__ . '/../config/local.php';
+        if (file_exists($berkasLokal)) {
+            $lokal = require $berkasLokal;
+        }
+
+        $this->host   = $lokal['db_host'] ?? 'localhost';
+        $this->user   = $lokal['db_user'] ?? 'root';
+        $this->pass   = $lokal['db_pass'] ?? '';
+        $this->dbname = $lokal['db_name'] ?? 'db_pakar_bk';
+
         try {
             $dsn = "mysql:host=" . $this->host . ";dbname=" . $this->dbname . ";charset=utf8mb4";
             $options = [
